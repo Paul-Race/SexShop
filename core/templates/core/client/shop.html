@@ -1,0 +1,297 @@
+{% extends 'core/client/base.html' %}
+
+{% load static %}
+
+{% block content %}
+<main class="product-grid">
+    <!-- Products will be dynamically inserted here -->
+</main>
+
+<!-- Filter Offcanvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="filterOffcanvas">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Filtros</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="filter-section">
+            <h6>Color</h6>
+            <div class="filter-option">
+                <input type="checkbox" id="color-brown" value="brown" class="color-filter">
+                <label for="color-brown">Marrón</label>
+            </div>
+            <div class="filter-option">
+                <input type="checkbox" id="color-black" value="black" class="color-filter">
+                <label for="color-black">Negro</label>
+            </div>
+        </div>
+        <div class="filter-section">
+            <h6>Precio</h6>
+            <div class="filter-option">
+                <input type="checkbox" id="price-2000-2300" value="2000-2300" class="price-filter">
+                <label for="price-2000-2300">2.000€ - 2.300€</label>
+            </div>
+            <div class="filter-option">
+                <input type="checkbox" id="price-2300-2500" value="2300-2500" class="price-filter">
+                <label for="price-2300-2500">2.300€ - 2.500€</label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Product data
+    const products = [
+        {
+            id: 1,
+            name: 'Bolso All In BB',
+            price: 2100,
+            color: 'brown',
+            images: [
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png',
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png',
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png'
+            ],
+            isNew: true
+        },
+        {
+            id: 2,
+            name: 'Bolso All In GM',
+            price: 2300,
+            color: 'brown',
+            images: [
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png',
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png',
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png'
+            ],
+            isNew: true
+        },
+        {
+            id: 3,
+            name: 'Bolso All In BB',
+            price: 2300,
+            color: 'black',
+            images: [
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png',
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png',
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png'
+            ],
+            isNew: true
+        },
+        {
+            id: 4,
+            name: 'Bolso All In GM',
+            price: 2500,
+            color: 'black',
+            images: [
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png',
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png',
+                'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-jSuAHSTARVfOL7ItxRs29VwFeeFYQ1.png'
+            ],
+            isNew: true
+        }
+    ];
+
+    // State
+    let activeFilters = {
+        colors: [],
+        priceRanges: []
+    };
+    let currentSort = 'newest';
+    const wishlist = new Set();
+
+    // DOM Elements
+    const productGrid = document.querySelector('.product-grid');
+    const colorFilters = document.querySelectorAll('.color-filter');
+    const priceFilters = document.querySelectorAll('.price-filter');
+    const sortButtons = document.querySelectorAll('[data-sort]');
+
+    // Functions
+    function formatPrice(price) {
+        return new Intl.NumberFormat('es-ES', {
+            style: 'currency',
+            currency: 'EUR'
+        }).format(price);
+    }
+
+    function renderProducts(productsToRender) {
+        productGrid.innerHTML = productsToRender.map(product => `
+            <div class="product-card" data-color="${product.color}" data-price="${product.price}">
+                <button class="wishlist-btn ${wishlist.has(product.id) ? 'active' : ''}" data-id="${product.id}">
+                    <i class="bi ${wishlist.has(product.id) ? 'bi-heart-fill' : 'bi-heart'}"></i>
+                </button>
+                <div class="product-image-container">
+                    <div class="product-images" data-product-id="${product.id}">
+                        ${product.images.map(img => `
+                            <img src="${img}" alt="${product.name}" class="product-image">
+                        `).join('')}
+                    </div>
+                    <button class="carousel-arrow prev" data-product-id="${product.id}">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="carousel-arrow next" data-product-id="${product.id}">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <div class="carousel-dots">
+                        ${product.images.map((_, index) => `
+                            <button class="carousel-dot ${index === 0 ? 'active' : ''}" 
+                                    data-product-id="${product.id}" 
+                                    data-index="${index}">
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="product-info">
+                    ${product.isNew ? '<div class="product-tag">Nuevo</div>' : ''}
+                    <h3 class="product-name">${product.name}</h3>
+                    <div class="product-price">${formatPrice(product.price)}</div>
+                </div>
+            </div>
+        `).join('');
+
+        // Reattach event listeners
+        attachCarouselListeners();
+        document.querySelectorAll('.wishlist-btn').forEach(btn => {
+            btn.addEventListener('click', handleWishlist);
+        });
+    }
+
+    function attachCarouselListeners() {
+        const productCards = document.querySelectorAll('.product-card');
+
+        productCards.forEach(card => {
+            const productId = card.querySelector('.product-images').dataset.productId;
+            const images = card.querySelector('.product-images');
+            const dots = card.querySelectorAll('.carousel-dot');
+            let currentIndex = 0;
+
+            // Previous button
+            card.querySelector('.carousel-arrow.prev').addEventListener('click', (e) => {
+                e.preventDefault();
+                currentIndex = Math.max(currentIndex - 1, 0);
+                updateCarousel();
+            });
+
+            // Next button
+            card.querySelector('.carousel-arrow.next').addEventListener('click', (e) => {
+                e.preventDefault();
+                const maxIndex = images.children.length - 1;
+                currentIndex = Math.min(currentIndex + 1, maxIndex);
+                updateCarousel();
+            });
+
+            // Dot navigation
+            dots.forEach(dot => {
+                dot.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentIndex = parseInt(dot.dataset.index);
+                    updateCarousel();
+                });
+            });
+
+            function updateCarousel() {
+                const offset = -100 * currentIndex;
+                images.style.transform = `translateX(${offset}%)`;
+
+                // Update dots
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentIndex);
+                });
+            }
+        });
+    }
+
+
+    function filterProducts() {
+        let filtered = [...products];
+
+        // Apply color filters
+        if (activeFilters.colors.length > 0) {
+            filtered = filtered.filter(product => activeFilters.colors.includes(product.color));
+        }
+
+        // Apply price range filters
+        if (activeFilters.priceRanges.length > 0) {
+            filtered = filtered.filter(product => {
+                return activeFilters.priceRanges.some(range => {
+                    const [min, max] = range.split('-').map(Number);
+                    return product.price >= min && product.price <= max;
+                });
+            });
+        }
+
+        // Apply sorting
+        filtered.sort((a, b) => {
+            switch (currentSort) {
+                case 'price-low':
+                    return a.price - b.price;
+                case 'price-high':
+                    return b.price - a.price;
+                case 'newest':
+                default:
+                    return 0; // Maintain original order for newest
+            }
+        });
+
+        renderProducts(filtered);
+        updateFilterCount();
+    }
+
+    function updateFilterCount() {
+        const totalFilters = activeFilters.colors.length + activeFilters.priceRanges.length;
+        const filterBtn = document.querySelector('.filter-btn');
+        filterBtn.textContent = `Filtros (${totalFilters}) `;
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-sliders';
+        filterBtn.appendChild(icon);
+    }
+
+    function handleWishlist(e) {
+        const productId = Number(e.currentTarget.dataset.id);
+        if (wishlist.has(productId)) {
+            wishlist.delete(productId);
+            e.currentTarget.classList.remove('active');
+            e.currentTarget.querySelector('i').classList.replace('bi-heart-fill', 'bi-heart');
+        } else {
+            wishlist.add(productId);
+            e.currentTarget.classList.add('active');
+            e.currentTarget.querySelector('i').classList.replace('bi-heart', 'bi-heart-fill');
+        }
+    }
+
+    // Event Listeners
+    colorFilters.forEach(filter => {
+        filter.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                activeFilters.colors.push(e.target.value);
+            } else {
+                activeFilters.colors = activeFilters.colors.filter(color => color !== e.target.value);
+            }
+            filterProducts();
+        });
+    });
+
+    priceFilters.forEach(filter => {
+        filter.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                activeFilters.priceRanges.push(e.target.value);
+            } else {
+                activeFilters.priceRanges = activeFilters.priceRanges.filter(range => range !== e.target.value);
+            }
+            filterProducts();
+        });
+    });
+
+    sortButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentSort = e.target.dataset.sort;
+            filterProducts();
+        });
+    });
+
+    // Initial render
+    filterProducts();
+</script>
+{% endblock %}
