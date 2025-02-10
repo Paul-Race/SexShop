@@ -1,2 +1,4 @@
 django-axes  
 django-admin-interface
+mercadopago
+django-simple-captcha
